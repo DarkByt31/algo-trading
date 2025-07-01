@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 import time
 
 # === CONFIG ===
-API_KEY = ""
-API_SECRET = ""
-ACCESS_TOKEN = ""
+API_KEY = "8kb1ag60chrc88ol"
+API_SECRET = "26y0pw6mdwkurjn6e2z01hqtxti942zj"
+ACCESS_TOKEN = "5iTJZ0RTLyGKLIqJ0qCngkal1g3R3P6c"
 
 STOCK_LIST = ["RELIANCE", "VOLTAS", "TATVA"]
 EXCHANGE = "NSE"
@@ -84,7 +84,6 @@ def backtest(symbol, df):
                 if qty == 0:
                     continue
                 position = -qty
-                capital -= qty * entry_price
                 trades.append({
                     'type': 'SELL',
                     'time': row['datetime'],
@@ -96,12 +95,16 @@ def backtest(symbol, df):
         # EXIT only if a position is active and signal has reverted to HOLD
         elif position != 0 and row['signal'] == 'HOLD':
             exit_price = row['close']
-            capital += abs(position) * exit_price
+            qty = abs(position)
+            if position > 0:  # closing BUY
+                capital += qty * exit_price
+            else:  # closing SELL
+                capital += qty * (entry_price - exit_price)
             trades.append({
                 'type': 'EXIT',
                 'time': row['datetime'],
                 'price': exit_price,
-                'qty': abs(position),
+                'qty': qty,
                 'capital': round(capital, 2)
             })
             position = 0
@@ -131,7 +134,7 @@ def backtest(symbol, df):
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
-    plt.show()
+    #plt.show()
 
 
 # === Main Execution ===
