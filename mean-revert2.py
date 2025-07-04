@@ -5,6 +5,7 @@ from kiteconnect import KiteConnect
 import matplotlib.pyplot as plt
 import time
 import json
+from scipy.signal import argrelextrema
 
 # === CONFIG ===
 CONFIG_PATH = "kite_config.json"
@@ -16,12 +17,13 @@ API_SECRET = config["api_secret"]
 ACCESS_TOKEN = config["access_token"]
 
 
-STOCK_LIST = ["RELIANCE", "VOLTAS", "TATVA"]
+STOCK_LIST = ["RELIANCE"] #, "VOLTAS", "TATVA"]
 EXCHANGE = "NSE"
 INTERVAL = "5minute"
-LOOKBACK_DAYS = 14
+LOOKBACK_DAYS = 4
 SMA_WINDOW = 20
 Z_ENTRY = 1
+Z_EXIT_THRESHOLD = 0.3
 CAPITAL = 50000
 
 kite = KiteConnect(api_key=API_KEY)
@@ -43,6 +45,11 @@ def fetch_data(symbol):
     data = kite.historical_data(token, from_date, to_date, INTERVAL)
     df = pd.DataFrame(data)
     df['datetime'] = pd.to_datetime(df['date'])
+
+    # Keep only NSE market hours
+    df = df[(df['datetime'].dt.time >= datetime.time(9, 15)) & 
+            (df['datetime'].dt.time <= datetime.time(15, 30))]
+
     df = df[['datetime', 'close']]
     return df
 
@@ -51,10 +58,25 @@ def apply_mean_reversion(df):
     df['sma'] = df['close'].rolling(SMA_WINDOW).mean()
     df['std'] = df['close'].rolling(SMA_WINDOW).std()
     df['z_score'] = (df['close'] - df['sma']) / df['std']
-    df['signal'] = np.where(df['z_score'] < -Z_ENTRY, 'BUY',
-                    np.where(df['z_score'] > Z_ENTRY, 'SELL', 'HOLD'))
+    df['signal'] = 'HOLD'
+
+    for i in range(2, len(df)):
+        z_prev2 = df.loc[i - 2, 'z_score']
+        z_prev1 = df.loc[i - 1, 'z_score']
+        z_curr = df.loc[i, 'z_score']
+
+        # Detect local max (SELL)
+        if z_prev2 < z_prev1 > z_curr and z_curr > Z_ENTRY:
+            df.loc[i, 'signal'] = 'SELL'
+
+        # Detect local min (BUY)
+        elif z_prev2 > z_prev1 < z_curr and z_curr < -Z_ENTRY:
+            df.loc[i, 'signal'] = 'BUY'
+
+    # Shift signal to avoid forward bias in execution
     df['position'] = df['signal'].shift().fillna('HOLD')
     return df.dropna()
+
 
 # === Backtest Logic ===
 def backtest(symbol, df):
@@ -98,23 +120,29 @@ def backtest(symbol, df):
                     'capital': round(capital, 2)
                 })
 
-        # EXIT only if a position is active and signal has reverted to HOLD
-        elif position != 0 and row['signal'] == 'HOLD':
-            exit_price = row['close']
-            qty = abs(position)
-            if position > 0:  # closing BUY
-                capital += qty * exit_price
-            else:  # closing SELL
-                capital += qty * (entry_price - exit_price)
-            trades.append({
-                'type': 'EXIT',
-                'time': row['datetime'],
-                'price': exit_price,
-                'qty': qty,
-                'capital': round(capital, 2)
-            })
-            position = 0
+        # EXIT when Z-score reverts toward mean
+        elif position != 0:
+            should_exit = False
+            if position > 0 and row['z_score'] > -Z_EXIT_THRESHOLD:
+                should_exit = True
+            elif position < 0 and row['z_score'] < Z_EXIT_THRESHOLD:
+                should_exit = True
 
+            if should_exit:
+                exit_price = row['close']
+                qty = abs(position)
+                if position > 0:  # closing BUY
+                    capital += qty * exit_price
+                else:  # closing SELL
+                    capital += qty * (entry_price - exit_price)
+                trades.append({
+                    'type': 'EXIT',
+                    'time': row['datetime'],
+                    'price': exit_price,
+                    'qty': qty,
+                    'capital': round(capital, 2)
+                })
+                position = 0
 
     final_value = capital
     print(f"\n[{symbol}]")
@@ -122,25 +150,59 @@ def backtest(symbol, df):
     print(f"Net Profit: ₹{round(final_value - CAPITAL, 2)}")
 
     # Print trade log
-    print("\nExecuted Trades:")
+    print(f"\nExecuted Trades: {len(trades) / 2}")
     for t in trades:
         print(f"{t['time']} - {t['type']} - Qty: {t['qty']} @ ₹{t['price']} | Capital: ₹{round(t['capital'], 2)}")
 
     # Plot strategy returns
-    df['returns'] = df['close'].pct_change()
-    df['strategy_returns'] = df['returns'] * np.where(df['position'] == 'BUY', 1,
-                                                      np.where(df['position'] == 'SELL', -1, 0))
-    df['cumulative_returns'] = (1 + df['strategy_returns']).cumprod()
+    plot_mean_reversion_signals(symbol, df, trades)
 
-    plt.figure(figsize=(10, 4))
-    plt.plot(df['datetime'], df['cumulative_returns'], label="Strategy Returns")
-    plt.title(f"{symbol} - Mean Reversion Backtest")
-    plt.xlabel("Time")
-    plt.ylabel("Cumulative Returns")
-    plt.grid(True)
-    plt.legend()
+def plot_mean_reversion_signals(symbol, df, trades):
+    df = df.reset_index(drop=True)
+    df['time_index'] = df.index
+
+    buy_signals = df[df['signal'] == 'BUY']
+    sell_signals = df[df['signal'] == 'SELL']
+    exit_times = [t['time'] for t in trades if t['type'] == 'EXIT']
+    exit_df = df[df['datetime'].isin(exit_times)]
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 8), sharex=True)
+
+    # Price and signals
+    ax1.plot(df['time_index'], df['close'], label='Close Price', color='blue', alpha=0.7)
+    ax1.plot(df['time_index'], df['sma'], label='SMA', color='orange', linestyle='--')
+    ax1.scatter(buy_signals['time_index'], buy_signals['close'], label='Buy Signal', marker='^', color='green')
+    ax1.scatter(sell_signals['time_index'], sell_signals['close'], label='Sell Signal', marker='v', color='red')
+    ax1.scatter(exit_df['time_index'], exit_df['close'], label='Exit', marker='x', color='black')
+    ax1.set_ylabel('Price')
+    ax1.set_title(f'{symbol} - Price and Mean Reversion Signals')
+    ax1.legend()
+    ax1.grid(True)
+
+    # Z-score plot
+    ax2.plot(df['time_index'], df['z_score'], label='Z-Score', color='purple')
+    ax2.axhline(Z_ENTRY, color='red', linestyle='--', label=f'+Z_ENTRY ({Z_ENTRY})')
+    ax2.axhline(-Z_ENTRY, color='green', linestyle='--', label=f'-Z_ENTRY ({-Z_ENTRY})')
+    ax2.axhline(0, color='black', linestyle=':')
+    ax2.scatter(buy_signals['time_index'], buy_signals['z_score'], marker='^', color='green', label='Buy Signal')
+    ax2.scatter(sell_signals['time_index'], sell_signals['z_score'], marker='v', color='red', label='Sell Signal')
+    ax2.scatter(exit_df['time_index'], exit_df['z_score'], marker='x', color='black', label='Exit')
+    ax2.set_ylabel('Z-Score')
+    ax2.set_xlabel('Time')
+    ax2.set_title(f'{symbol} - Z-Score and Entry Signals')
+    ax2.legend()
+    ax2.grid(True)
+
+    # Tick labels
+    tick_spacing = max(1, len(df) // 10)
+    tick_locs = df['time_index'][::tick_spacing]
+    tick_labels = df['datetime'][::tick_spacing].dt.strftime("%m-%d %H:%M")
+
+    ax2.set_xticks(tick_locs)
+    ax2.set_xticklabels(tick_labels, rotation=45)
+
     plt.tight_layout()
-    #plt.show()
+    plt.show()
 
 
 # === Main Execution ===
