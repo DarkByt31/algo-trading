@@ -2,10 +2,10 @@ import pandas as pd
 import numpy as np
 import datetime
 from kiteconnect import KiteConnect
-import matplotlib.pyplot as plt
 import time
 import json
 from scipy.signal import argrelextrema
+from log_and_plot_utils import print_trade_log, plot_mean_reversion_signals, plot_weekly_gains
 
 # === CONFIG ===
 CONFIG_PATH = "kite_config.json"
@@ -20,7 +20,7 @@ ACCESS_TOKEN = config["access_token"]
 STOCK_LIST = ["RELIANCE"] #, "VOLTAS", "TATVA"]
 EXCHANGE = "NSE"
 INTERVAL = "5minute"
-LOOKBACK_DAYS = 4
+LOOKBACK_DAYS = 30
 SMA_WINDOW = 20
 Z_ENTRY = 1
 Z_EXIT_THRESHOLD = 0.3
@@ -123,9 +123,9 @@ def backtest(symbol, df):
         # EXIT when Z-score reverts toward mean
         elif position != 0:
             should_exit = False
-            if position > 0 and row['z_score'] > -Z_EXIT_THRESHOLD:
+            if position > 0 and row['z_score'] > Z_EXIT_THRESHOLD:
                 should_exit = True
-            elif position < 0 and row['z_score'] < Z_EXIT_THRESHOLD:
+            elif position < 0 and row['z_score'] < -Z_EXIT_THRESHOLD:
                 should_exit = True
 
             if should_exit:
@@ -145,64 +145,9 @@ def backtest(symbol, df):
                 position = 0
 
     final_value = capital
-    print(f"\n[{symbol}]")
-    print(f"Net Capital After Backtest: ₹{round(final_value, 2)}")
-    print(f"Net Profit: ₹{round(final_value - CAPITAL, 2)}")
-
-    # Print trade log
-    print(f"\nExecuted Trades: {len(trades) / 2}")
-    for t in trades:
-        print(f"{t['time']} - {t['type']} - Qty: {t['qty']} @ ₹{t['price']} | Capital: ₹{round(t['capital'], 2)}")
-
-    # Plot strategy returns
-    plot_mean_reversion_signals(symbol, df, trades)
-
-def plot_mean_reversion_signals(symbol, df, trades):
-    df = df.reset_index(drop=True)
-    df['time_index'] = df.index
-
-    buy_signals = df[df['signal'] == 'BUY']
-    sell_signals = df[df['signal'] == 'SELL']
-    exit_times = [t['time'] for t in trades if t['type'] == 'EXIT']
-    exit_df = df[df['datetime'].isin(exit_times)]
-
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 8), sharex=True)
-
-    # Price and signals
-    ax1.plot(df['time_index'], df['close'], label='Close Price', color='blue', alpha=0.7)
-    ax1.plot(df['time_index'], df['sma'], label='SMA', color='orange', linestyle='--')
-    ax1.scatter(buy_signals['time_index'], buy_signals['close'], label='Buy Signal', marker='^', color='green')
-    ax1.scatter(sell_signals['time_index'], sell_signals['close'], label='Sell Signal', marker='v', color='red')
-    ax1.scatter(exit_df['time_index'], exit_df['close'], label='Exit', marker='x', color='black')
-    ax1.set_ylabel('Price')
-    ax1.set_title(f'{symbol} - Price and Mean Reversion Signals')
-    ax1.legend()
-    ax1.grid(True)
-
-    # Z-score plot
-    ax2.plot(df['time_index'], df['z_score'], label='Z-Score', color='purple')
-    ax2.axhline(Z_ENTRY, color='red', linestyle='--', label=f'+Z_ENTRY ({Z_ENTRY})')
-    ax2.axhline(-Z_ENTRY, color='green', linestyle='--', label=f'-Z_ENTRY ({-Z_ENTRY})')
-    ax2.axhline(0, color='black', linestyle=':')
-    ax2.scatter(buy_signals['time_index'], buy_signals['z_score'], marker='^', color='green', label='Buy Signal')
-    ax2.scatter(sell_signals['time_index'], sell_signals['z_score'], marker='v', color='red', label='Sell Signal')
-    ax2.scatter(exit_df['time_index'], exit_df['z_score'], marker='x', color='black', label='Exit')
-    ax2.set_ylabel('Z-Score')
-    ax2.set_xlabel('Time')
-    ax2.set_title(f'{symbol} - Z-Score and Entry Signals')
-    ax2.legend()
-    ax2.grid(True)
-
-    # Tick labels
-    tick_spacing = max(1, len(df) // 10)
-    tick_locs = df['time_index'][::tick_spacing]
-    tick_labels = df['datetime'][::tick_spacing].dt.strftime("%m-%d %H:%M")
-
-    ax2.set_xticks(tick_locs)
-    ax2.set_xticklabels(tick_labels, rotation=45)
-
-    plt.tight_layout()
-    plt.show()
+    print_trade_log(symbol, trades, final_value, CAPITAL)
+    plot_mean_reversion_signals(symbol, df, trades, Z_ENTRY)
+    plot_weekly_gains(trades, CAPITAL)
 
 
 # === Main Execution ===
