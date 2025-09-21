@@ -5,7 +5,7 @@ def print_trade_log(symbol, trades, capital, initial_capital):
     print(f"\n[{symbol}]")
     print(f"Net Capital After Backtest: ₹{round(capital, 2)}")
     print(f"Net Profit: ₹{round(capital - initial_capital, 2)}")
-    print(f"\nExecuted Trades: {len(trades) / 2}")
+    print(f"\nExecuted Trades: {len(trades)}")
     for t in trades:
         print(f"{t['time']} - {t['type']} - Qty: {t['qty']} @ ₹{t['price']} | Capital: ₹{round(t['capital'], 2)}")
 

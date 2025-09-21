@@ -17,14 +17,14 @@ API_SECRET = config["api_secret"]
 ACCESS_TOKEN = config["access_token"]
 
 
-STOCK_LIST = ["RELIANCE"] #, "VOLTAS", "TATVA"]
+STOCK_LIST = ["RELIANCE", "VOLTAS", "TATVA"]
 EXCHANGE = "NSE"
 INTERVAL = "5minute"
-LOOKBACK_DAYS = 30
+LOOKBACK_DAYS = 4
 SMA_WINDOW = 20
 Z_ENTRY = 1
 Z_EXIT_THRESHOLD = 0.3
-CAPITAL = 50000
+CAPITAL = 500000
 
 kite = KiteConnect(api_key=API_KEY)
 kite.set_access_token(ACCESS_TOKEN)
@@ -89,7 +89,33 @@ def backtest(symbol, df):
         row = df.iloc[i]
         prev = df.iloc[i - 1]
 
-        # ENTER position only if FLAT
+        curr_time = row['datetime'].time()
+
+        # --- Skip trades before 9:15 AM ---
+        if curr_time < datetime.time(9, 15):
+            continue
+
+        # --- Force exit at or after 3:00 PM if holding position ---
+        if position != 0 and curr_time >= datetime.time(15, 0):
+            exit_price = row['close']
+            qty = abs(position)
+            if position > 0:
+                capital += qty * exit_price
+            else:
+                capital += qty * (entry_price - exit_price)
+
+            trades.append({
+                'type': 'EXIT',
+                'time': row['datetime'],
+                'price': exit_price,
+                'qty': qty,
+                'capital': round(capital, 2)
+            })
+
+            position = 0
+            continue  # Skip further logic to avoid re-entry after forced exit
+
+        # --- ENTRY ---
         if position == 0:
             if prev['signal'] == 'HOLD' and row['signal'] == 'BUY' and capital > 0:
                 entry_price = row['close']
@@ -144,10 +170,31 @@ def backtest(symbol, df):
                 })
                 position = 0
 
+    # Handle edge case if market closed and position still open (failsafe)
+    if position != 0:
+        print(f"Market closed with open position for {symbol}. Exiting position...")
+        last_row = df.iloc[-1]
+        exit_price = last_row['close']
+        qty = abs(position)
+        if position > 0:
+            capital += qty * exit_price
+        else:
+            capital += qty * (entry_price - exit_price)
+
+        trades.append({
+            'type': 'EXIT',
+            'time': last_row['datetime'],
+            'price': exit_price,
+            'qty': qty,
+            'capital': round(capital, 2)
+        })
+
+
+
     final_value = capital
     print_trade_log(symbol, trades, final_value, CAPITAL)
-    plot_mean_reversion_signals(symbol, df, trades, Z_ENTRY)
-    plot_weekly_gains(trades, CAPITAL)
+    # plot_mean_reversion_signals(symbol, df, trades, Z_ENTRY)
+    # plot_weekly_gains(trades, CAPITAL)
 
 
 # === Main Execution ===
