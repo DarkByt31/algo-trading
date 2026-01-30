@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     
     # App
     DEBUG: bool = True
-    LOG_LEVEL: str = "INFO"
+    LOG_LEVEL: str = "DEBUG"
     APP_NAME: str = "Trading Backtester API"
     API_VERSION: str = "v1"
     

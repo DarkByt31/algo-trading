@@ -4,13 +4,15 @@ from sqlalchemy.pool import NullPool
 from app.config import settings
 
 # Create engine
+connect_args = {}
+if settings.DATABASE_URL.startswith("sqlite"):
+    connect_args = {"check_same_thread": False}
+
 engine = create_engine(
     settings.DATABASE_URL,
     echo=settings.DEBUG,
     poolclass=NullPool if settings.DEBUG else None,
-    connect_args={
-        "autocommit": False,
-    }
+    connect_args=connect_args,
 )
 
 # Session factory
