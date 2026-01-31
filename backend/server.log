@@ -1617,3 +1617,5 @@ WHERE backtest_jobs.id = ?
 2026-01-31 00:51:23,174 - sqlalchemy.engine.Engine - INFO - COMMIT
 2026-01-31 00:51:23,177 - app.api.v1.endpoints.backtest - INFO - Job d627c39b-e9c1-40d8-a2be-56382bc29454 completed successfully
 INFO:     127.0.0.1:46198 - "POST /api/v1/backtest HTTP/1.1" 202 Accepted
+INFO:     127.0.0.1:39266 - "GET /api/v1/stocks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39274 - "GET /api/v1/stocks HTTP/1.1" 200 OK
