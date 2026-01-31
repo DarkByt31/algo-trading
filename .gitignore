@@ -1,7 +1,62 @@
 kite_config.json
 *.png
 __pycache__/
-alog-trading.code-workspace
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.venv/
+venv/
+ENV/
+
+# Frontend
 frontend/node_modules/
 frontend/package-lock.json
+frontend/npm-debug.log*
+frontend/dist/
+frontend/build/
+frontend/coverage/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment & Config
+.env
+.env.local
+.env.*.local
+kite_config.json
+alog-trading.code-workspace
+
+# Database & Logs
 test_db.db
+db.sqlite3
+*.db
+../backend/server.log
+*.log
+
+# Test Coverage
+coverage/
+htmlcov/
+.coverage
+*.lcov
