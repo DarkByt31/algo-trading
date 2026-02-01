@@ -73,14 +73,14 @@ class BacktestEngine:
                     self.executor.record_trade(trades, 'BUY', row['datetime'], entry_price, qty, capital, extra={'trade_sequence': trade_seq, 'z_score': float(row.get('z_score', 0)), 'sma': float(row.get('sma', 0))})
 
                 elif prev['signal'] == 'HOLD' and row['signal'] == 'SELL' and allow_short and capital > 0:
-                    qty, cost, capital_after = self.executor.enter_long(capital, row['close'])
-                    # Use enter_short semantics
-                    qty_short = qty
+                    # Use the executor's short entry logic so we don't deduct full position cost
+                    qty_signed, cost, capital_after = self.executor.enter_short(capital, row['close'])
+                    qty_short = abs(qty_signed)
                     if qty_short == 0:
                         continue
                     position = -qty_short
                     entry_price = row['close']
-                    # entering short reduces capital by brokerage only
+                    # enter_short already returns capital after brokerage/margin handling
                     capital = capital_after
                     trade_seq += 1
                     logger.info(f"SELL signal at {row['datetime']} - Price: {entry_price}, Qty: {qty_short}, Z-Score: {row.get('z_score', 0):.4f}")

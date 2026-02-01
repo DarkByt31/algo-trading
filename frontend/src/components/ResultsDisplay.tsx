@@ -114,14 +114,14 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, loading
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <MetricCard
-            label="Total PnL"
-            value={formatCurrency(results.total_pnl)}
-            color={results.total_pnl >= 0 ? 'success' : 'error'}
+            label="Total Return"
+            value={formatCurrency(results.total_return)}
+            color={results.total_return >= 0 ? 'success' : 'error'}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <MetricCard
-            label="Return"
+            label="Return %"
             value={formatPercentage(results.return_percentage / 100)}
             color={results.return_percentage >= 0 ? 'success' : 'error'}
           />
@@ -140,9 +140,6 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, loading
         </Grid>
         <Grid item xs={12} sm={6} md={2.4}>
           <MetricCard label="Win Rate" value={formatPercentage(results.win_rate)} />
-        </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
-          <MetricCard label="Max Drawdown" value={formatPercentage(results.max_drawdown)} />
         </Grid>
       </Grid>
     </Box>

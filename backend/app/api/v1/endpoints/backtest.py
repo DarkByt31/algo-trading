@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/backtest", response_model=BacktestResponse, status_code=202)
+@router.post("/backtest", response_model=BacktestResponse, status_code=200)
 def submit_backtest(req: BacktestRequest):
     job_id = str(uuid.uuid4())
     logger.info(f"New backtest request - Job ID: {job_id}, Symbol: {req.symbol}, Algorithm: {req.algorithm_id}")
@@ -43,12 +43,19 @@ def submit_backtest(req: BacktestRequest):
 
         fetcher = MockDataFetcher()
         logger.debug(f"Fetching data for {req.symbol} from {req.start_date} to {req.end_date}")
+        # Validate request date range early
+        if req.start_date >= req.end_date:
+            raise ValueError("start_date must be before end_date")
+
         df = fetcher.fetch_historical_data(
             req.symbol,
             datetime.combine(req.start_date, time.min),
             datetime.combine(req.end_date, time.max),
         )
         logger.debug(f"Data fetched - {len(df)} candles received")
+
+        if df.empty:
+            raise ValueError("No data available for given symbol/date range")
 
         executor = TradeExecutor(brokerage_fee=req.brokerage_fee)
         engine = BacktestEngine(executor)
@@ -109,6 +116,15 @@ def submit_backtest(req: BacktestRequest):
         logger.info(f"Job {job_id} completed successfully")
 
         return BacktestResponse(job_id=job_id, status="completed", message="Backtest completed")
+    except ValueError as e:
+        logger.warning(f"Validation error for job {job_id} - {e}")
+        db.rollback()
+        if "job" in locals():
+            job.status = "failed"
+            job.error_message = str(e)
+            db.add(job)
+            db.commit()
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Backtest failed for job {job_id} - Error: {str(e)}", exc_info=True)
         db.rollback()

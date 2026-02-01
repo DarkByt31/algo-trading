@@ -19,7 +19,7 @@ import {
   SubmitButton,
 } from '../components';
 import { useBacktest, useAlgorithms } from '../hooks';
-import { BacktestRequest } from '../types/backtest';
+import { BacktestRequest, BacktestParameters } from '../types/backtest';
 
 interface BacktestPageProps {
   onBacktestSubmit?: (jobId: string) => void;
@@ -85,13 +85,22 @@ export const BacktestPage: React.FC<BacktestPageProps> = ({ onBacktestSubmit }) 
       return;
     }
 
+    // Convert parameters to the correct type with uppercase keys
+    const typedParameters: BacktestParameters = {
+      SMA_WINDOW: Number(parameters.SMA_WINDOW || 20),
+      Z_ENTRY: Number(parameters.Z_ENTRY || 1),
+      Z_EXIT_THRESHOLD: Number(parameters.Z_EXIT_THRESHOLD || 0.3),
+    };
+
     const request: BacktestRequest = {
       symbol: selectedStock,
-      algorithm: selectedAlgorithm,
+      algorithm_id: selectedAlgorithm,
       start_date: startDate,
       end_date: endDate,
-      capital,
-      parameters,
+      initial_capital: capital,
+      parameters: typedParameters,
+      allow_short: true,
+      brokerage_fee: 20.0,
     };
 
     try {

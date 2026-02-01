@@ -15,7 +15,9 @@ export const useStocks = () => {
         setStocks(data);
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to fetch stocks';
+        console.error('Error fetching stocks:', errorMessage);
         setError(errorMessage);
+        setStocks([]); // Reset stocks on error
       } finally {
         setLoading(false);
       }

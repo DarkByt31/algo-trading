@@ -12,25 +12,32 @@ export interface Trade {
   type: 'LONG' | 'SHORT';
 }
 
+// Chart data structure
+export interface ChartData {
+  timestamps: string[];
+  prices: number[];
+  sma?: number[];
+  z_scores?: number[];
+  signals?: number[];
+}
+
 // Results-related types
 export interface BacktestResults {
   job_id: string;
+  status: string;
   symbol: string;
   algorithm: string;
   start_date: string;
   end_date: string;
   initial_capital: number;
   final_capital: number;
+  total_return: number;
   total_trades: number;
   winning_trades: number;
   losing_trades: number;
   win_rate: number;
-  total_pnl: number;
   return_percentage: number;
-  max_drawdown: number;
-  sharpe_ratio: number;
-  created_at: string;
-  status: string;
+  chart_data: ChartData;
 }
 
 export interface ResultsWithTrades {

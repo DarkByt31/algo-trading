@@ -19,7 +19,8 @@ class TradeExecutor:
 
     def enter_long(self, capital: float, price: float) -> Tuple[int, float, float]:
         qty = calculate_quantity(capital, price)
-        cost = qty * price + self.brokerage if qty > 0 else 0.0
+        cost = qty * price if qty > 0 else 0.0
+        # Charge brokerage on exit only (simpler model)
         capital_after = capital - cost
         logger.debug(f"ENTER_LONG - Capital: {capital}, Price: {price}, Qty: {qty}, Cost: {cost}, Capital_after: {capital_after}")
         return qty, cost, capital_after
@@ -27,9 +28,9 @@ class TradeExecutor:
     def enter_short(self, capital: float, price: float) -> Tuple[int, float, float]:
         # For short, we assume using full capital as margin to short qty shares at price
         qty = calculate_quantity(capital, price)
-        # No immediate cash outflow in simple model; charge brokerage
-        cost = self.brokerage if qty > 0 else 0.0
-        capital_after = capital - cost
+        # No immediate cash outflow in simple model; brokerage charged on exit
+        cost = 0.0
+        capital_after = capital
         return -qty, cost, capital_after
 
     def exit_long(self, capital: float, qty: int, entry_price: float, exit_price: float) -> Tuple[float, float]:

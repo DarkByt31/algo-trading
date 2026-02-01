@@ -11,6 +11,7 @@ export const useResults = ({ jobId, pollInterval = 2000 }: UseResultsOptions = {
   const [results, setResults] = useState<BacktestResults | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCompleted, setIsCompleted] = useState(false);
 
   const fetchResults = useCallback(async (id: string) => {
     setLoading(true);
@@ -18,6 +19,10 @@ export const useResults = ({ jobId, pollInterval = 2000 }: UseResultsOptions = {
     try {
       const data = await apiClient.getResults(id);
       setResults(data);
+      // Stop polling if status is completed or failed
+      if (data.status === 'completed' || data.status === 'failed') {
+        setIsCompleted(true);
+      }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch results';
       setError(errorMessage);
@@ -27,23 +32,27 @@ export const useResults = ({ jobId, pollInterval = 2000 }: UseResultsOptions = {
   }, []);
 
   useEffect(() => {
-    if (!jobId) return;
+    if (!jobId || isCompleted) return;
 
     // Initial fetch
     fetchResults(jobId);
 
-    // Set up polling
+    // Set up polling - only if not completed
     const interval = setInterval(() => {
       fetchResults(jobId);
     }, pollInterval);
 
     return () => clearInterval(interval);
-  }, [jobId, pollInterval, fetchResults]);
+  }, [jobId, pollInterval, fetchResults, isCompleted]);
 
   return {
     results,
     loading,
     error,
-    refetch: () => jobId && fetchResults(jobId),
+    isCompleted,
+    refetch: () => {
+      setIsCompleted(false);
+      jobId && fetchResults(jobId);
+    },
   };
 };
