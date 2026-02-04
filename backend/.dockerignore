@@ -1,0 +1,59 @@
+# Git
+.git
+.gitignore
+.github
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.venv/
+venv/
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+test.db
+.coverage
+htmlcov/
+.tox/
+
+# Environment (secrets - CRITICAL)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+server.log
+
+# Database
+*.sqlite
+*.sqlite3
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+TESTING_REPORT.md
+VERIFICATION_COMPLETE.md
+
+# Misc
+README.md
+Dockerfile
+docker-compose*.yml
+.dockerignore
