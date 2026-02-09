@@ -6,16 +6,12 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Copy application files
 COPY . .
 
 # Expose port
 EXPOSE 3000
-
-# Set environment
-ENV VITE_API_BASE_URL=http://localhost:8000/api/v1
-
 # Run dev server
 CMD ["npm", "run", "dev"]

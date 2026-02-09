@@ -4,7 +4,10 @@ import { BacktestRequest, BacktestResponse, BacktestStatus } from '../types/back
 import { Trade, BacktestResults } from '../types/results';
 import { Stock } from '../types/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+// Use relative `/api` by default so browser requests use the same origin
+// and are handled by the Vite dev server proxy. If you need an explicit
+// base URL override, set `VITE_API_BASE_URL` in the environment.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 class ApiClient {
   private axiosInstance: AxiosInstance;
