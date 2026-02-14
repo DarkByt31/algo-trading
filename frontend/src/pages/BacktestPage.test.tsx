@@ -1,6 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
-import * as useBacktestHook from '../hooks/useBacktest';
-import * as useAlgorithmsHook from '../hooks/useAlgorithms';
+import { describe, it, expect } from 'vitest';
 
 /**
  * BacktestPage - Backtest API Integration Tests
@@ -9,18 +7,18 @@ import * as useAlgorithmsHook from '../hooks/useAlgorithms';
  * used when submitting backtest requests to the backend API.
  */
 describe('BacktestPage - Backtest Submission', () => {
-  const mockAlgorithms = [
-    {
-      id: 'mean_reversion',
-      name: 'Mean Reversion',
-      description: 'Mean reversion trading strategy',
-      parameters: [
-        { name: 'SMA_WINDOW', default: 20, min: 5, max: 100, step: 1 },
-        { name: 'Z_ENTRY', default: 1, min: 0.5, max: 3, step: 0.1 },
-        { name: 'Z_EXIT_THRESHOLD', default: 0.3, min: 0.1, max: 1, step: 0.1 },
-      ],
-    },
-  ];
+  // const mockAlgorithms = [
+  //   {
+  //     id: 'mean_reversion',
+  //     name: 'Mean Reversion',
+  //     description: 'Mean reversion trading strategy',
+  //     parameters: [
+  //       { name: 'SMA_WINDOW', default: 20, min: 5, max: 100, step: 1 },
+  //       { name: 'Z_ENTRY', default: 1, min: 0.5, max: 3, step: 0.1 },
+  //       { name: 'Z_EXIT_THRESHOLD', default: 0.3, min: 0.1, max: 1, step: 0.1 },
+  //     ],
+  //   },
+  // ];
 
   // Test 1: Verify correct BacktestRequest field names
   it('uses algorithm_id field (NOT algorithm) in BacktestRequest', () => {

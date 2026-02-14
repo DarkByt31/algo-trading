@@ -14,7 +14,7 @@ import { BacktestResults } from '../types/results';
 interface ResultsDisplayProps {
   results: BacktestResults | null;
   loading: boolean;
-  error?: string;
+  error?: string | null;
 }
 
 const formatCurrency = (value: number): string => {

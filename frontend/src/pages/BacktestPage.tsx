@@ -65,7 +65,7 @@ export const BacktestPage: React.FC<BacktestPageProps> = ({ onBacktestSubmit }) 
     if (selectedAlgoDetails) {
       const defaultParams: Record<string, string | number> = {};
       selectedAlgoDetails.parameters.forEach((param) => {
-        defaultParams[param.name] = param.default;
+        defaultParams[param.name] = param.default as string | number;
       });
       setParameters(defaultParams);
       setActiveStep(1); // Move to next step

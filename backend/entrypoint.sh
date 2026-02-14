@@ -16,15 +16,18 @@ done
 
 echo "MySQL is ready!"
 
-echo "Initializing database tables..."
-python -c "from app.db.base import Base; from app.db.session import engine; Base.metadata.create_all(bind=engine)" || {
-  echo "Failed to initialize DB, but continuing...";
+echo "Running database migrations..."
+# ensure application package is importable by Alembic
+cd /app || exit 1
+export PYTHONPATH=/app
+/usr/local/bin/alembic upgrade head || {
+  echo "Failed to run migrations, but continuing...";
 }
 
-echo "Starting uvicorn..."
+echo "Starting gunicorn with uvicorn workers..."
 if [ "$#" -gt 0 ]; then
   echo "Received command: $@ — running it"
   exec "$@"
 else
-  exec uvicorn app.main:app --host 0.0.0.0 --port 8000
+  exec /usr/local/bin/gunicorn -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --access-logfile - --error-logfile - app.main:app
 fi

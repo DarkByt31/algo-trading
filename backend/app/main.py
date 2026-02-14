@@ -18,9 +18,11 @@ app = FastAPI(
 )
 
 # Add CORS middleware
+# Configure CORS using settings.ALLOWED_ORIGINS (comma-separated)
+allowed_origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -29,7 +31,9 @@ app.add_middleware(
 
 @app.on_event("startup")
 def startup_event():
-    Base.metadata.create_all(bind=engine)
+    # Use Alembic migrations for schema management in production.
+    # Removing runtime create_all() avoids conflicts with Alembic-managed schema changes.
+    return
 
 
 @app.get("/health")

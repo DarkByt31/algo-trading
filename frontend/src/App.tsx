@@ -3,11 +3,6 @@ import { Box, Container, AppBar, Toolbar, Tabs, Tab, Typography } from '@mui/mat
 import { BacktestPage, ResultsPage } from './pages';
 import './App.css';
 
-interface AppPageValue {
-  backtest: number;
-  results: number;
-}
-
 export const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<0 | 1>(0);
   const [submittedJobId, setSubmittedJobId] = useState<string | undefined>();
@@ -28,7 +23,7 @@ export const App: React.FC = () => {
         <Toolbar variant="dense" sx={{ backgroundColor: '#f5f5f5', color: '#000' }}>
           <Tabs
             value={currentPage}
-            onChange={(e, v) => setCurrentPage(v)}
+            onChange={(_, v) => setCurrentPage(v)}
             sx={{ flexGrow: 1 }}
             textColor="inherit"
           >

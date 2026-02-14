@@ -12,7 +12,6 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
-import { Trade } from '../types/results';
 import { useTrades } from '../hooks/useTrades';
 
 interface TradeLogProps {

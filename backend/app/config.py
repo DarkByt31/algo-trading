@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     # Backtest constraints
     MAX_BACKTEST_DAYS: int = 90  # 3 months
     DEFAULT_INTERVAL: str = "5minute"
+    # CORS
+    # Comma-separated list of allowed origins, e.g. "http://localhost,http://localhost:8000"
+    ALLOWED_ORIGINS: str = "http://localhost,http://127.0.0.1,http://localhost:8000"
     
     class Config:
         env_file = ".env"

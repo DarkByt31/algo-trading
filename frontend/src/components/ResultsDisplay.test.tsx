@@ -18,7 +18,12 @@ describe('ResultsDisplay Component', () => {
     losing_trades: 4,
     win_rate: 0.6,
     return_percentage: 10.0,
-    max_drawdown: 0.05
+    max_drawdown: 0.05,
+    total_return: 10.0,
+    chart_data: {
+      timestamps: ['2024-01-01', '2024-01-10'],
+      prices: [50000, 55000]
+    }
   };
 
   it('renders results display with symbol and metrics', () => {
@@ -47,7 +52,7 @@ describe('ResultsDisplay Component', () => {
   });
 
   it('displays negative returns correctly', () => {
-    const negativeResults = { ...mockResults, final_capital: 45000, return_percentage: -10.0 };
+    const negativeResults = { ...mockResults, final_capital: 45000, return_percentage: -10.0, total_return: -10.0, chart_data: { timestamps: ['2024-01-01', '2024-01-10'], prices: [50000, 45000] } };
     render(<ResultsDisplay results={negativeResults} loading={false} />);
     expect(screen.getByText(/-10.00%/)).toBeTruthy();
   });

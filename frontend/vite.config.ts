@@ -7,7 +7,7 @@ export default (configEnv = {}) => {
   const mode = configEnv.mode || process.env.NODE_ENV || 'development'
   // load env variables for current mode (including VITE_ prefixed vars)
   const env = loadEnv(mode, process.cwd(), '') || {}
-  const backendTarget = env.VITE_BACKEND_URL || 'http://backend:8000'
+  const backendTarget = env.VITE_BACKEND_URL || 'http://localhost:8000'
 
   return defineConfig({
     plugins: [react()],

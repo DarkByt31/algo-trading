@@ -8,8 +8,6 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  Card,
-  CardContent,
 } from 'recharts';
 import { Box, Typography, Alert } from '@mui/material';
 import { Trade } from '../types/results';

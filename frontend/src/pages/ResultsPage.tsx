@@ -3,7 +3,6 @@ import {
   Box,
   Container,
   Paper,
-  Grid,
   Typography,
   TextField,
   Button,
@@ -31,14 +30,14 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
 );
 
 export const ResultsPage: React.FC<ResultsPageProps> = ({ jobId: initialJobId }) => {
-  const [jobId, setJobId] = useState(initialJobId || '');
+  const [jobId, setJobId] = useState<string | undefined>(initialJobId || undefined);
   const [tabValue, setTabValue] = useState(0);
   const { results, loading, error } = useResults({ jobId });
   const { trades } = useTrades(jobId);
 
-  const handleJobIdSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (jobId.trim()) {
+  const handleJobIdSubmit = (_e: React.FormEvent) => {
+    _e.preventDefault();
+    if (jobId && jobId.trim()) {
       setTabValue(1); // Switch to results tab
     }
   };
@@ -63,8 +62,8 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({ jobId: initialJobId })
             <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
                 placeholder="e.g., 123e4567-e89b-12d3-a456-426614174000"
-                value={jobId}
-                onChange={(e) => setJobId(e.target.value)}
+                value={jobId || ''}
+                onChange={(e) => setJobId(e.target.value || undefined)}
                 fullWidth
                 size="small"
               />
@@ -77,7 +76,7 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({ jobId: initialJobId })
       ) : (
         <>
           <Paper sx={{ mb: 3 }}>
-            <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)}>
+            <Tabs value={tabValue} onChange={(_e, v: number) => setTabValue(v)}>
               <Tab label="Metrics" />
               <Tab label="Trade Log" />
               <Tab label="Capital Growth" />
@@ -88,7 +87,7 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({ jobId: initialJobId })
             </TabPanel>
 
             <TabPanel value={tabValue} index={1}>
-              <TradeLog jobId={jobId} />
+              <TradeLog jobId={jobId as string | undefined} />
             </TabPanel>
 
             <TabPanel value={tabValue} index={2}>

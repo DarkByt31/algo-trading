@@ -7,7 +7,7 @@ import { Stock } from '../types/api';
 // Use relative `/api` by default so browser requests use the same origin
 // and are handled by the Vite dev server proxy. If you need an explicit
 // base URL override, set `VITE_API_BASE_URL` in the environment.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || '/api';
 
 class ApiClient {
   private axiosInstance: AxiosInstance;

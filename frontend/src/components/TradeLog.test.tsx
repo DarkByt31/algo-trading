@@ -1,35 +1,39 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import TradeLog from './TradeLog';
 import * as useTradesHook from '../hooks/useTrades';
 
 describe('TradeLog Component', () => {
-  afterEach(() => vi.resetAllMocks());
+  afterEach(() => {
+    vi.resetAllMocks();
+  });
 
   const mockTrades = [
     {
       id: '1',
       trade_sequence: 1,
-      type: 'BUY',
+      type: 'LONG' as const,
       symbol: 'TATVA',
       entry_date: '2024-01-02',
       entry_price: 100,
       exit_date: '2024-01-03',
       exit_price: 105,
       quantity: 100,
-      pnl: 500
+      pnl: 500,
+      job_id: 'job-1',
     },
     {
       id: '2',
       trade_sequence: 2,
-      type: 'SELL',
+      type: 'SHORT' as const,
       symbol: 'TATVA',
       entry_date: '2024-01-04',
       entry_price: 105,
       exit_date: '2024-01-05',
       exit_price: 103,
       quantity: 100,
-      pnl: -200
+      pnl: -200,
+      job_id: 'job-1',
     }
   ];
 
