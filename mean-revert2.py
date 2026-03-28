@@ -24,7 +24,7 @@ LOOKBACK_DAYS = 4
 SMA_WINDOW = 20
 Z_ENTRY = 1
 Z_EXIT_THRESHOLD = 0.3
-CAPITAL = 500000
+CAPITAL = 50000
 
 kite = KiteConnect(api_key=API_KEY)
 kite.set_access_token(ACCESS_TOKEN)

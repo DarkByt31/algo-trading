@@ -1,0 +1,61 @@
+version: "3.3"
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: algo_trading_db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-algo_trading}
+      MYSQL_USER: ${DB_USER:-trader}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-traderpass}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${DB_USER:-trader}", "-p${DB_PASSWORD:-traderpass}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: algo_trading_backend
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: mysql+pymysql://${DB_USER:-trader}:${DB_PASSWORD:-traderpass}@db:3306/${DB_NAME:-algo_trading}
+      DEBUG: ${DEBUG:-False}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      KITE_API_KEY: ${KITE_API_KEY}
+      KITE_API_SECRET: ${KITE_API_SECRET}
+      KITE_ACCESS_TOKEN: ${KITE_ACCESS_TOKEN}
+      MAX_BACKTEST_DAYS: ${MAX_BACKTEST_DAYS:-90}
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-trader}
+      DB_PASSWORD: ${DB_PASSWORD:-traderpass}
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    volumes:
+      - .:/app
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/stocks"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  db_data:
+    driver: local
+
+networks:
+  app_network:
+    driver: bridge
